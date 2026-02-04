@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlueFocus - Anime Study Companion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4f8cff;
+      --primary-dark: #3a6fd8;
+      --accent: #7eb8ff;
+      --bg-dark: #0a1628;
+      --bg-card: rgba(15,35,70,0.8);
+      --text: #e8f1ff;
+      --text-soft: #a8c5e8;
+      --danger: #ff6b8a;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0a1628 0%, #1a2f50 50%, #0d1f3c 100%);
+      min-height: 100vh;
+      color: var(--text);
+      overflow-x: hidden;
+    }
+    .stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 3s infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(10,22,40,0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(79,140,255,0.2);
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .mode-toggle {
+      display: flex;
+      gap: 10px;
+    }
+    .mode-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--primary);
+      background: transparent;
+      color: var(--primary);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    .mode-btn.active, .mode-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+    main {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 30px;
+      padding: 30px 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .timer-section { text-align: center; }
+    .timer-circle {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 30px auto;
+    }
+    .timer-ring {
+      transform: rotate(-90deg);
+    }
+    .ring-bg { fill: none; stroke: rgba(79,140,255,0.2); stroke-width: 8; }
+    .ring-progress {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear;
+    }
+    .timer-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .timer-label { font-size: 0.9rem; color: var(--text-soft); margin-bottom: 5px; }
+    .timer-display { font-size: 3rem; font-weight: 600; }
+    .timer-controls { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 25px;
+      font-family: inherit;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+    }
+    .btn-primary:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(79,140,255,0.4); }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+    .session-info { margin-top: 15px; color: var(--text-soft); }
+    .side-panel { display: flex; flex-direction: column; gap: 20px; }
+    .card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(79,140,255,0.15);
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .card-title { font-size: 1.1rem; font-weight: 500; }
+    .card-tag { font-size: 0.75rem; padding: 4px 12px; background: rgba(79,140,255,0.2); border-radius: 15px; }
+    .task-input-wrapper { display: flex; gap: 10px; margin-bottom: 15px; }
+    .task-input-wrapper input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: white;
+      font-family: inherit;
+    }
+    .task-input-wrapper input::placeholder { color: rgba(255,255,255,0.4); }
+    .add-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .task-list { list-style: none; max-height: 180px; overflow-y: auto; }
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .task-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); }
+    .task-item span { flex: 1; font-size: 0.9rem; }
+    .task-item.completed span { text-decoration: line-through; opacity: 0.6; }
+    .task-item .delete-btn { background: none; border: none; color: var(--danger); cursor: pointer; opacity: 0; transition: opacity 0.3s; }
+    .task-item:hover .delete-btn { opacity: 1; }
+    .goal-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .goal-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); }
+    .goal-text {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      color: white;
+      font-family: inherit;
+    }
+    .goal-text::placeholder { color: rgba(255,255,255,0.4); }
+    .quote-card blockquote { font-size: 1rem; line-height: 1.6; font-style: italic; margin-bottom: 10px; }
+    .quote-card cite { font-size: 0.85rem; color: var(--text-soft); }
+    .refresh-btn {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      color: var(--text-soft);
+      cursor: pointer;
+    }
+    .refresh-btn:hover { background: rgba(255,255,255,0.1); }
+    /* Anime Companion */
+    .companion-container {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 1000;
+    }
+    .companion {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, rgba(79,140,255,0.3), rgba(126,184,255,0.2));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      animation: float 3s ease-in-out infinite;
+      border: 2px solid rgba(79,140,255,0.5);
+    }
+    .companion:hover { transform: scale(1.1); }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .companion-emoji { font-size: 3rem; }
+    .speech-bubble {
+      position: absolute;
+      bottom: 130px;
+      left: 0;
+      background: var(--bg-card);
+      padding: 15px;
+      border-radius: 15px;
+      max-width: 200px;
+      font-size: 0.85rem;
+      display: none;
+      border: 1px solid rgba(79,140,255,0.3);
+    }
+    .speech-bubble.show { display: block; animation: fadeIn 0.3s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    /* Music Panel */
+    .music-panel {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 20px;
+      width: 280px;
+      z-index: 1000;
+      border: 1px solid rgba(79,140,255,0.2);
+    }
+    .music-title { font-size: 1rem; margin-bottom: 15px; }
+    .track-list { display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; }
+    .track {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .track:hover, .track.playing { background: rgba(79,140,255,0.2); }
+    .track-icon { font-size: 1.2rem; }
+    .track-name { flex: 1; font-size: 0.85rem; }
+    .volume-control { margin-top: 15px; display: flex; align-items: center; gap: 10px; }
+    .volume-slider { flex: 1; accent-color: var(--primary); }
+    /* Chatbot */
+    .chatbot-toggle {
+      position: fixed;
+      bottom: 160px;
+      left: 20px;
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 1.5rem;
+      z-index: 1001;
+      box-shadow: 0 4px 15px rgba(79,140,255,0.4);
+    }
+    .chatbot-panel {
+      position: fixed;
+      bottom: 220px;
+      left: 20px;
+      width: 320px;
+      height: 400px;
+      background: var(--bg-card);
+      border-radius: 20px;
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+      border: 1px solid rgba(79,140,255,0.2);
+      overflow: hidden;
+    }
+    .chatbot-panel.open { display: flex; }
+    .chat-header {
+      padding: 15px;
+      background: rgba(79,140,255,0.1);
+      border-bottom: 1px solid rgba(79,140,255,0.2);
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .message {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 15px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .message.bot {
+      background: rgba(79,140,255,0.2);
+      align-self: flex-start;
+      border-bottom-left-radius: 5px;
+    }
+    .message.user {
+      background: var(--primary);
+      align-self: flex-end;
+      border-bottom-right-radius: 5px;
+    }
+    .chat-input-wrapper {
+      padding: 15px;
+      display: flex;
+      gap: 10px;
+      border-top: 1px solid rgba(79,140,255,0.2);
+    }
+    .chat-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      color: white;
+      font-family: inherit;
+    }
+    .chat-send {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+    }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+      .music-panel { width: 250px; right: 10px; bottom: 10px; }
+      .companion-container { left: 10px; bottom: 10px; }
+      .companion { width: 80px; height: 80px; }
+      .companion-emoji { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+  <header>
+    <div class="logo">BlueFocus</div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" data-mode="study">Study</button>
+      <button class="mode-btn" data-mode="break">Break</button>
+      <button class="mode-btn" data-mode="ambient">Ambient</button>
+    </div>
+  </header>
+  <main>
+    <section class="timer-section">
+      <div class="timer-circle">
+        <svg class="timer-ring" width="280" height="280" viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="45"/>
+          <circle class="ring-progress" id="progress" cx="50" cy="50" r="45"/>
+        </svg>
+        <div class="timer-content">
+          <div class="timer-label" id="timerLabel">STUDY TIME</div>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+        </div>
+      </div>
+      <div class="timer-controls">
+        <button class="btn btn-primary" id="startBtn">Start</button>
+        <button class="btn btn-ghost" id="resetBtn">Reset</button>
+      </div>
+      <div class="session-info">Session <span id="sessionCount">1</span></div>
+    </section>
+    <aside class="side-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Tasks</h2>
+          <span class="card-tag" id="taskCount">0 tasks</span>
+        </div>
+        <div class="task-input-wrapper">
+          <input type="text" id="taskInput" placeholder="Add a new task...">
+          <button class="add-btn" id="addTaskBtn">+</button>
+        </div>
+        <ul class="task-list" id="taskList"></ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Daily Goals</h2>
+        </div>
+        <div class="goals-wrapper" id="goalsWrapper">
+          <div class="goal-item"><input type="checkbox"><input type="text" class="goal-text" placeholder="Goal 1..."></div>
+          <div class="goal-item"><input type="checkbox"><input type="text" class="goal-text" placeholder="Goal 2..."></div>
+          <div class="goal-item"><input type="checkbox"><input type="text" class="goal-text" placeholder="Goal 3..."></div>
+        </div>
+      </div>
+      <div class="card quote-card">
+        <div class="card-header">
+          <h2 class="card-title">Motivation</h2>
+          <button class="refresh-btn" id="newQuoteBtn">↻</button>
+        </div>
+        <blockquote id="quoteText">"The secret of getting ahead is getting started."</blockquote>
+        <cite id="quoteAuthor">— Mark Twain</cite>
+      </div>
+    </aside>
+  </main>
+  <!-- Companion -->
+  <div class="companion-container">
+    <div class="speech-bubble" id="speechBubble">Keep going! You're doing great!</div>
+    <div class="companion" id="companion">
+      <span class="companion-emoji">👩‍💻</span>
+    </div>
+  </div>
+  <!-- Chatbot -->
+  <button class="chatbot-toggle" id="chatToggle">💬</button>
+  <div class="chatbot-panel" id="chatPanel">
+    <div class="chat-header">Study Assistant</div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot">Hi! I'm your study assistant. Ask me anything about your studies!</div>
+    </div>
+    <div class="chat-input-wrapper">
+      <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question...">
+      <button class="chat-send" id="chatSend">➤</button>
+    </div>
+  </div>
+  <!-- Music Panel -->
+  <div class="music-panel">
+    <div class="music-title">🎵 Focus Music</div>
+    <div class="track-list" id="trackList">
+      <div class="track" data-track="rain"><span class="track-icon">🌧️</span><span class="track-name">Rain Sounds</span></div>
+      <div class="track" data-track="lofi"><span class="track-icon">🎧</span><span class="track-name">Lo-Fi Beats</span></div>
+      <div class="track" data-track="nature"><span class="track-icon">🌿</span><span class="track-name">Nature Sounds</span></div>
+      <div class="track" data-track="cafe"><span class="track-icon">☕</span><span class="track-name">Cafe Ambience</span></div>
+    </div>
+    <div class="volume-control">
+      <span>🔊</span>
+      <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
+    </div>
+  </div>
+  <script>
+    // Stars background
+    const starsContainer = document.getElementById('stars');
+    for (let i = 0; i < 100; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 100 + '%';
+      star.style.animationDelay = Math.random() * 3 + 's';
+      starsContainer.appendChild(star);
+    }
+    // Timer
+    let timeLeft = 25 * 60;
+    let totalTime = 25 * 60;
+    let timerInterval = null;
+    let isRunning = false;
+    let sessionCount = 1;
+    let currentMode = 'study';
+    const timerDisplay = document.getElementById('timerDisplay');
+    const timerLabel = document.getElementById('timerLabel');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const progressCircle = document.getElementById('progress');
+    const sessionCountEl = document.getElementById('sessionCount');
+    function updateDisplay() {
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      timerDisplay.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      const offset = 283 - (283 * timeLeft / totalTime);
+      progressCircle.style.strokeDashoffset = offset;
+    }
+    function startTimer() {
+      if (isRunning) {
+        clearInterval(timerInterval);
+        startBtn.textContent = 'Start';
+        isRunning = false;
+      } else {
+        timerInterval = setInterval(() => {
+          if (timeLeft > 0) { timeLeft--; updateDisplay(); }
+          else { clearInterval(timerInterval); isRunning = false; startBtn.textContent = 'Start'; sessionCount++; sessionCountEl.textContent = sessionCount; }
+        }, 1000);
+        startBtn.textContent = 'Pause';
+        isRunning = true;
+      }
+    }
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      startBtn.textContent = 'Start';
+      if (currentMode === 'study') { timeLeft = 25 * 60; totalTime = 25 * 60; }
+      else if (currentMode === 'break') { timeLeft = 5 * 60; totalTime = 5 * 60; }
+      else { timeLeft = 60 * 60; totalTime = 60 * 60; }
+      updateDisplay();
+    }
+    startBtn.addEventListener('click', startTimer);
+    resetBtn.addEventListener('click', resetTimer);
+    // Mode buttons
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        if (currentMode === 'study') { timerLabel.textContent = 'STUDY TIME'; timeLeft = 25 * 60; totalTime = 25 * 60; }
+        else if (currentMode === 'break') { timerLabel.textContent = 'BREAK TIME'; timeLeft = 5 * 60; totalTime = 5 * 60; }
+        else { timerLabel.textContent = 'AMBIENT MODE'; timeLeft = 60 * 60; totalTime = 60 * 60; }
+        clearInterval(timerInterval); isRunning = false; startBtn.textContent = 'Start'; updateDisplay();
+      });
+    });
+    // Tasks
+    const taskInput = document.getElementById('taskInput');
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    const taskList = document.getElementById('taskList');
+    const taskCount = document.getElementById('taskCount');
+    let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    function renderTasks() {
+      taskList.innerHTML = '';
+      tasks.forEach((task, i) => {
+        const li = document.createElement('li');
+        li.className = 'task-item' + (task.done ? ' completed' : '');
+        li.innerHTML = '<input type="checkbox" ' + (task.done ? 'checked' : '') + '><span>' + task.text + '</span><button class="delete-btn">X</button>';
+        li.querySelector('input').addEventListener('change', () => { tasks[i].done = !tasks[i].done; saveTasks(); renderTasks(); });
+        li.querySelector('.delete-btn').addEventListener('click', () => { tasks.splice(i, 1); saveTasks(); renderTasks(); });
+        taskList.appendChild(li);
+      });
+      taskCount.textContent = tasks.length + ' tasks';
+    }
+    function saveTasks() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
+    function addTask() {
+      const text = taskInput.value.trim();
+      if (text) { tasks.push({ text, done: false }); saveTasks(); renderTasks(); taskInput.value = ''; }
+    }
+    addTaskBtn.addEventListener('click', addTask);
+    taskInput.addEventListener('keypress', e => { if (e.key === 'Enter') addTask(); });
+    renderTasks();
+    // Quotes
+    const quotes = [
+      { text: '"The secret of getting ahead is getting started."', author: 'Mark Twain' },
+      { text: '"Success is not final, failure is not fatal."', author: 'Winston Churchill' },
+      { text: '"Believe you can and you\'re halfway there."', author: 'Theodore Roosevelt' },
+      { text: '"It always seems impossible until it\'s done."', author: 'Nelson Mandela' },
+      { text: '"The only way to do great work is to love what you do."', author: 'Steve Jobs' },
+      { text: '"Dream big and dare to fail."', author: 'Norman Vaughan' },
+      { text: '"Education is the most powerful weapon."', author: 'Nelson Mandela' },
+      { text: '"The future belongs to those who believe in their dreams."', author: 'Eleanor Roosevelt' }
+    ];
+    const quoteText = document.getElementById('quoteText');
+    const quoteAuthor = document.getElementById('quoteAuthor');
+    const newQuoteBtn = document.getElementById('newQuoteBtn');
+    function showNewQuote() {
+      const quote = quotes[Math.floor(Math.random() * quotes.length)];
+      quoteText.textContent = quote.text;
+      quoteAuthor.textContent = '\u2014 ' + quote.author;
+    }
+    newQuoteBtn.addEventListener('click', showNewQuote);
+    // Companion
+    const companion = document.getElementById('companion');
+    const speechBubble = document.getElementById('speechBubble');
+    const messages = ['Keep going!', 'You\'re doing great!', 'Stay focused!', 'Almost there!', 'Take a deep breath!', 'You got this!'];
+    companion.addEventListener('click', () => {
+      speechBubble.textContent = messages[Math.floor(Math.random() * messages.length)];
+      speechBubble.classList.add('show');
+      setTimeout(() => speechBubble.classList.remove('show'), 3000);
+    });
+    // Chatbot
+    const chatToggle = document.getElementById('chatToggle');
+    const chatPanel = document.getElementById('chatPanel');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+    chatToggle.addEventListener('click', () => chatPanel.classList.toggle('open'));
+    const responses = {
+      'hello': 'Hi there! How can I help you study today?',
+      'help': 'I can help with study tips, motivation, or just chat!',
+      'study': 'Try the Pomodoro technique: 25 min focus, 5 min break!',
+      'tired': 'Take a short break, stretch, and drink some water!',
+      'focus': 'Remove distractions, set clear goals, and use the timer!',
+      'math': 'For math, practice regularly and understand concepts first!',
+      'default': 'That\'s interesting! Keep studying hard!'
+    };
+    function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      chatMessages.innerHTML += '<div class="message user">' + text + '</div>';
+      chatInput.value = '';
+      const key = Object.keys(responses).find(k => text.toLowerCase().includes(k)) || 'default';
+      setTimeout(() => {
+        chatMessages.innerHTML += '<div class="message bot">' + responses[key] + '</div>';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }, 500);
+    }
+    chatSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+    // Music
+    const tracks = {
+      rain: 'https://assets.mixkit.co/sfx/preview/mixkit-light-rain-loop-2393.mp3',
+      lofi: 'https://assets.mixkit.co/sfx/preview/mixkit-sleepy-cat-135.mp3',
+      nature: 'https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-1210.mp3',
+      cafe: 'https://assets.mixkit.co/sfx/preview/mixkit-restaurant-crowd-talking-ambience-444.mp3'
+    };
+    let currentAudio = null;
+    let currentTrack = null;
+    const volumeSlider = document.getElementById('volumeSlider');
+    document.querySelectorAll('.track').forEach(track => {
+      track.addEventListener('click', () => {
+        const trackName = track.dataset.track;
+        if (currentTrack === trackName && currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+          currentTrack = null;
+          track.classList.remove('playing');
+        } else {
+          if (currentAudio) { currentAudio.pause(); document.querySelector('.track.playing')?.classList.remove('playing'); }
+          currentAudio = new Audio(tracks[trackName]);
+          currentAudio.loop = true;
+          currentAudio.volume = volumeSlider.value / 100;
+          currentAudio.play();
+          currentTrack = trackName;
+          track.classList.add('playing');
+        }
+      });
+    });
+    volumeSlider.addEventListener('input', () => { if (currentAudio) currentAudio.volume = volumeSlider.value / 100; });
+    // Goals persistence
+    const goalInputs = document.querySelectorAll('.goal-text');
+    const goalChecks = document.querySelectorAll('.goal-item input[type="checkbox"]');
+    goalInputs.forEach((input, i) => {
+      input.value = localStorage.getItem('goal' + i) || '';
+      input.addEventListener('input', () => localStorage.setItem('goal' + i, input.value));
+    });
+    goalChecks.forEach((check, i) => {
+      check.checked = localStorage.getItem('goalCheck' + i) === 'true';
+      check.addEventListener('change', () => localStorage.setItem('goalCheck' + i, check.checked));
+    });
+  </script>
+</body>
+</html>
